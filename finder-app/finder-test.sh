@@ -31,10 +31,18 @@ echo "Writing ${NUMFILES} files containing string ${WRITESTR} to ${WRITEDIR}"
 
 rm -rf "${WRITEDIR}"
 
+##
+## the conditional on assignment1 is not valid if ${WRITEDIR} is removed first (above line)
+## this makes the assignment break, at least as it is written.
+##
+## I will remove the conditional below and replace with an existence check for the directory instead.
+##
+
 # create $WRITEDIR if not assignment1
 assignment=`cat ../conf/assignment.txt`
 
-if [ $assignment != 'assignment1' ]
+### if [ $assignment != 'assignment1' ]
+if ! [ -d "$WRITEDIR" ]
 then
 	mkdir -p "$WRITEDIR"
 
