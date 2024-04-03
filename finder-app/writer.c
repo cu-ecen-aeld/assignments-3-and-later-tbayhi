@@ -61,6 +61,8 @@ int main(int argc, char *argv[]) {
 
             retval = 1;
         }
+
+        closelog();
     }
 
     return retval;
