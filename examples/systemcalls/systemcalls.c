@@ -1,4 +1,10 @@
+#define _XOPEN_SOURCE
+
 #include "systemcalls.h"
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <fcntl.h>
 
 /**
  * @param cmd the command to execute with system()
@@ -16,8 +22,9 @@ bool do_system(const char *cmd)
  *   and return a boolean true if the system() call completed with success
  *   or false() if it returned a failure
 */
-
-    return true;
+    int retval = system(cmd);
+    
+    return retval ? false : true;
 }
 
 /**
@@ -45,9 +52,9 @@ bool do_exec(int count, ...)
         command[i] = va_arg(args, char *);
     }
     command[count] = NULL;
-    // this line is to avoid a compile warning before your implementation is complete
-    // and may be removed
-    command[count] = command[count];
+    // // this line is to avoid a compile warning before your implementation is complete
+    // // and may be removed
+    // command[count] = command[count];
 
 /*
  * TODO:
@@ -58,10 +65,33 @@ bool do_exec(int count, ...)
  *   as second argument to the execv() command.
  *
 */
+    bool ans = true;
 
+    int pid = fork();
+
+    if (pid == 0) {
+        // we are the child
+        execv(command[0], command);
+
+        exit(-1);
+    } else if (pid == -1) {
+        // we are the parent and fork failed
+        perror("fork");
+        ans = false;
+    } else {
+        // we are the parent and we forked
+        int status;
+
+        if (wait(&status) == -1) {
+            ans = false;
+        } else if (WIFEXITED(status)) {
+            ans = (WEXITSTATUS(status) == 0) ? true : false;
+        }
+    }
+    
     va_end(args);
 
-    return true;
+    return ans;
 }
 
 /**
@@ -80,9 +110,9 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
         command[i] = va_arg(args, char *);
     }
     command[count] = NULL;
-    // this line is to avoid a compile warning before your implementation is complete
-    // and may be removed
-    command[count] = command[count];
+    // // this line is to avoid a compile warning before your implementation is complete
+    // // and may be removed
+    // command[count] = command[count];
 
 
 /*
@@ -92,8 +122,47 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *   The rest of the behaviour is same as do_exec()
  *
 */
+    bool ans = true;
+
+    int fd = open(outputfile, O_WRONLY | O_TRUNC | O_CREAT, 0644);
+
+    if (fd < 0) {
+        perror("open");
+        ans = false;
+    } else {
+        int pid = fork();
+
+        if (pid == 0) {
+            if (dup2(fd, 1) < 0) {
+                perror("dup2");
+                exit(-1);
+            };
+
+            close(fd);
+
+            execv(command[0], command);
+
+            exit(-1);
+        } else if (pid == -1) {
+            // we are the parent and fork failed
+            perror("fork");
+            close(fd);
+            ans = false;
+        } else {
+            // we are the parent and we forked
+            close(fd);
+            
+            int status;
+
+            if (wait(&status) == -1) {
+                ans = false;
+            } else if (WIFEXITED(status)) {
+                ans = (WEXITSTATUS(status) == 0) ? true : false;
+            }
+        }
+    }
 
     va_end(args);
 
-    return true;
+    return ans;
 }
