@@ -15,8 +15,10 @@ if ! [ -d "$1" ]; then
     exit 1
 fi
 
+cd ${filesdir}
+
 # get X and Y and echo the next:
 X=`find ${filesdir} -type f | wc -l`
-Y=`grep -R ${searchstr} ${filesdir} | wc -l`
+Y=`grep -r ${searchstr} | wc -l`
 
 echo The number of files are $X and the number of matching lines are $Y
