@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 filesdir=$1
 searchstr=$2
@@ -19,6 +19,6 @@ cd ${filesdir}
 
 # get X and Y and echo the next:
 X=`find ${filesdir} -type f | wc -l`
-Y=`grep -r ${searchstr} | wc -l`
+Y=`grep -r ${searchstr} * | wc -l`
 
 echo The number of files are $X and the number of matching lines are $Y
