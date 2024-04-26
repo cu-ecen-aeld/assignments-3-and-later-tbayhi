@@ -1,5 +1,6 @@
 // needed for daemon() function and sigaction stuff
 #define _DEFAULT_SOURCE
+#define __USE_XOPEN
 
 #include <stdio.h>
 #include <stdlib.h>
