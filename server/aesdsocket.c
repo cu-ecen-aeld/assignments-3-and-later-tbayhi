@@ -196,7 +196,7 @@ int main (int argc, char **argv) {
         if (!fork()) {
             close(server_fd);
 
-            temp_fd = open(TEMPFILE, O_CREAT | O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
+            temp_fd = open(TEMPFILE, O_CREAT | O_RDWR | O_APPEND, 0400 | 0200);
 
             if (temp_fd < 0) {
                 syslog(LOG_WARNING, "could not open temp file");
