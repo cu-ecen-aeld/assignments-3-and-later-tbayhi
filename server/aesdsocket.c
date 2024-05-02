@@ -32,8 +32,8 @@ static pthread_t timer_thread;
 static int running_as_usual;
 
 struct node {
-	pthread_t thread;
-	SLIST_ENTRY(node) next;
+    pthread_t thread;
+    SLIST_ENTRY(node) next;
 };
 
 SLIST_HEAD(head_s, node) head;
@@ -44,7 +44,7 @@ struct timer_thread_arg_s {
 };
 
 struct client_thread_arg_s {
-	int connection_fd;
+    int connection_fd;
     int exit_code;
 };
 
@@ -90,21 +90,21 @@ void *timer_thread_worker(void *thread_param) {
 void *client_thread_worker(void *thread_param) {
     struct client_thread_arg_s* thread_args = (struct client_thread_arg_s*) thread_param;
 
-	int conn_fd = thread_args->connection_fd;
+    int conn_fd = thread_args->connection_fd;
 
-	// read from client until newlinez
-	char curr;
-	char line[MAX_LINE_LENGTH + 2];
+    // read from client until newlinez
+    char curr;
+    char line[MAX_LINE_LENGTH + 2];
 
-	memset(&line, '\0', MAX_LINE_LENGTH + 2);
+    memset(&line, '\0', MAX_LINE_LENGTH + 2);
 
-	int index = 0;
-	int ret;
+    int index = 0;
+    int ret;
 
     do {
         ret = recv(conn_fd, &curr, 1, 0);
 
-		if (ret == 1) {
+        if (ret == 1) {
             if (curr != '\r' && curr != '\n') {
                 line[index++] = curr;
 
@@ -117,24 +117,24 @@ void *client_thread_worker(void *thread_param) {
         } else if (ret == -1 && (errno != EAGAIN || errno != EWOULDBLOCK)) {
             thread_args->exit_code = 1;
         }
-	} while (curr != '\n' && !thread_args->exit_code);
+    } while (curr != '\n' && !thread_args->exit_code);
 
-	if (!thread_args->exit_code && strlen(line) > 0) {
-		// printf("Bytes: %lu; Len: %lu; Heard: '%s'\n", strlen(line) * sizeof(char), strlen(line), line);
-		line[index] = '\n';
+    if (!thread_args->exit_code && strlen(line) > 0) {
+        // printf("Bytes: %lu; Len: %lu; Heard: '%s'\n", strlen(line) * sizeof(char), strlen(line), line);
+        line[index] = '\n';
 
-		pthread_mutex_lock(&mutex);
-		
-		// we are writing in append mode
-		ret = write(temp_fd, line, strlen(line));
+        pthread_mutex_lock(&mutex);
+        
+        // we are writing in append mode
+        ret = write(temp_fd, line, strlen(line));
 
-		pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(&mutex);
 
-		if (ret == -1) {
-			perror("write");
+        if (ret == -1) {
+            perror("write");
             thread_args->exit_code = 1;
-		}
-	}
+        }
+    }
 
     if (!thread_args->exit_code) {
         int offset = 0;
@@ -179,7 +179,7 @@ void *client_thread_worker(void *thread_param) {
 
     close(conn_fd);
 
-	return thread_param;
+    return thread_param;
 }
 
 void cleanup() {
@@ -193,27 +193,35 @@ void cleanup() {
 
     void* thread_rtn;
 
-	// loop over the threads and join them one by one
-	while (!SLIST_EMPTY(&head)) {
+    // loop over the threads and join them one by one
+    while (!SLIST_EMPTY(&head)) {
         struct node *first = SLIST_FIRST(&head);
 
-		if ((pthread_join(first->thread, &thread_rtn)) != 0) {
-			syslog(LOG_WARNING, "Could not client thread.");
-		}
+        if ((pthread_join(first->thread, &thread_rtn)) != 0) {
+            syslog(LOG_WARNING, "Could not client thread.");
+        }
 
-        free(thread_rtn);
+        if (thread_rtn) {
+            free(thread_rtn);
+        }
 
-		SLIST_REMOVE_HEAD(&head, next);
+        SLIST_REMOVE_HEAD(&head, next);
 
-		free(first);
-		first = NULL;
-	}
+        if (first) {
+            free(first);
+        }
+        
+        first = NULL;
+    }
 
+    // now join the timer thread
     if (pthread_join(timer_thread, &thread_rtn) != 0) {
         syslog(LOG_WARNING, "Could not join timer thread.");
     }
 
-    free(thread_rtn);
+    if (thread_rtn) {
+        free(thread_rtn);
+    }
 
     close(server_fd);
     close(temp_fd);
@@ -226,8 +234,8 @@ void cleanup() {
 void sigterm_handler(int signo) {
     syslog(LOG_DEBUG, "Caught signal, exiting");
 
-	cleanup();
-	
+    cleanup();
+    
     exit(EXIT_SUCCESS);
 }
 
@@ -330,17 +338,17 @@ int main (int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-	// ready the tempfile
+    // ready the tempfile
     temp_fd = open(TEMPFILE, O_CREAT | O_RDWR | O_APPEND, 0400 | 0200);
 
-	if (temp_fd < 0) {
-		fprintf(stderr, "Could not open temp file");
-		
+    if (temp_fd < 0) {
+        fprintf(stderr, "Could not open temp file");
+        
         exit(EXIT_FAILURE);
-	}
+    }
 
     // init the client thread list
-	SLIST_INIT(&head);
+    SLIST_INIT(&head);
 
     // start the timer thread
     pthread_create(&timer_thread, NULL, timer_thread_worker, NULL);
@@ -370,15 +378,15 @@ int main (int argc, char **argv) {
         thread_args->connection_fd = connection_fd;
         thread_args->exit_code = 0;
 
-		pthread_t thread_id;
+        pthread_t thread_id;
 
         if (pthread_create(&thread_id, NULL, client_thread_worker, thread_args) != 0) {
-			syslog(LOG_ERR, "Could not create thread!");
-			cleanup();
+            syslog(LOG_ERR, "Could not create thread!");
+            cleanup();
 
-			exit(EXIT_FAILURE);
-		}
-		
+            exit(EXIT_FAILURE);
+        }
+        
         struct node *elem = malloc(sizeof(struct node));
 
         if (elem == NULL) {
@@ -388,7 +396,7 @@ int main (int argc, char **argv) {
 
         elem->thread = thread_id;
 
-		SLIST_INSERT_HEAD(&head, elem, next);
+        SLIST_INSERT_HEAD(&head, elem, next);
     }
  
     return EXIT_SUCCESS;
