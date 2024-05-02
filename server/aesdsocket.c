@@ -187,9 +187,7 @@ void cleanup() {
 
     pthread_mutex_lock(&mutex);
 
-    shutdown(server_fd, SHUT_RD);
-    sleep(1);
-    shutdown(server_fd, SHUT_WR);
+    shutdown(server_fd, SHUT_RDWR);
     
     pthread_mutex_unlock(&mutex);
 
