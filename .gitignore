@@ -4,6 +4,7 @@ Test_*_Runner.c
 build/
 crosstool-ng
 aesd-build
+assignments/assignment7/.obsidian/
 .vscode/
 .vscode-ctags
 test.sh.log

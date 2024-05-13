@@ -52,13 +52,20 @@ struct aesd_buffer_entry *aesd_circular_buffer_find_entry_offset_for_fpos(struct
             } else {
                 // we're here. populate the ptr w/ char and return this entry
                 printf("found %s\n", curr->buffptr);
-                retval = curr;
 
                 size_t as_size_t = (size_t)(curr->buffptr[char_offset]);
                 printf("char there is '%c'\n", curr->buffptr[char_offset]);
-                printf("ascii val is %lu\n", as_size_t);
 
                 entry_offset_byte_rtn = &as_size_t;
+
+                printf("ascii val is %lu\n", *entry_offset_byte_rtn);
+
+                // char *rtn_as_str = (char *)(*entry_offset_byte_rtn);
+
+                // printf("rtn as char* is '%s'\n", rtn_as_str);
+
+                printf("rtn as str '%s'\n", (char *)entry_offset_byte_rtn);
+                retval = curr;
 
                 break;
             }
